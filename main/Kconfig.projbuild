@@ -1,0 +1,86 @@
+menu "ESP32_RC522 Configuration"
+
+    config WIFI_SSID
+        string "WiFi SSID"
+        default "myssid"
+        help
+            SSID (network name) to connect to.
+
+    config WIFI_PASSWORD
+        string "WiFi Password"
+        default "mypassword"
+        help
+            WiFi password (WPA or WPA2) to use.
+
+    choice SCAN_METHOD
+        prompt "Scan method"
+        default WIFI_FAST_SCAN
+        help
+            scan method for the esp32 to use
+
+        config WIFI_FAST_SCAN
+            bool "fast"
+        config WIFI_ALL_CHANNEL_SCAN
+            bool "all"
+    endchoice
+
+    choice SORT_METHOD
+        prompt "sort method"
+        default WIFI_CONNECT_AP_BY_SIGNAL
+        help
+            sort method for the esp32 to use
+
+        config WIFI_CONNECT_AP_BY_SIGNAL
+            bool "rssi"
+        config WIFI_CONNECT_AP_BY_SECURITY
+            bool "authmode"
+    endchoice
+
+    config FAST_SCAN_THRESHOLD
+        bool "fast scan threshold"
+        default y
+        help
+            wifi fast scan threshold
+
+    config FAST_SCAN_MINIMUM_SIGNAL
+        int "fast scan minimum rssi"
+        depends on FAST_SCAN_THRESHOLD
+        range -127 0
+        default -127
+        help
+            rssi is use to measure the signal
+
+    choice FAST_SCAN_WEAKEST_AUTHMODE
+        prompt "fast scan weakest authmode"
+        depends on FAST_SCAN_THRESHOLD
+        default FAST_SCAN_WEAKEST_AUTHMODE_OPEN
+
+        config FAST_SCAN_WEAKEST_AUTHMODE_OPEN
+            bool "open"
+        config FAST_SCAN_WEAKEST_AUTHMODE_WEP
+            bool "wep"
+        config FAST_SCAN_WEAKEST_AUTHMODE_WPA
+            bool "wpa"
+        config FAST_SCAN_WEAKEST_AUTHMODE_WPA2
+            bool "wpa2"
+    endchoice
+
+
+    config DESTINATION_ADDRESS
+        string "Destination IPV4 Address"
+        default "X.X.X.X"
+        help
+            Address to connect and make the RC522 available to.
+
+    config DESTINATION_PORT
+        int "Destination port"
+        default 45000
+        help
+            Port to connect and make the RC522 available to.
+
+
+    config RST_GPIO_NUM
+        int "RC522 RST pin GPIO number"
+        help
+            GPIO number where the RC522 RST pin is connected to.
+endmenu

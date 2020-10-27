@@ -79,8 +79,35 @@ menu "ESP32_RC522 Configuration"
             Port to connect and make the RC522 available to.
 
 
+    config SPI_CLK_GPIO_NUM
+        int "SPI CLK GPIO number"
+        default 14
+	help
+            GPIO number to use for SPI clock.
+
+    config SPI_MISO_GPIO_NUM
+        int "SPI MISO GPIO number"
+        default 12
+	help
+            GPIO number to use for SPI MISO.
+
+    config SPI_MOSI_GPIO_NUM
+        int "SPI MOSI GPIO number"
+        default 13
+	help
+            GPIO number to use for SPI MOSI.
+
+
+    config CS_GPIO_NUM
+        int "RC522 CS pin GPIO number"
+        default 26
+	help
+            GPIO number where the RC522 RST pin is connected to.
+
     config RST_GPIO_NUM
         int "RC522 RST pin GPIO number"
-        help
+        default 27
+	help
             GPIO number where the RC522 RST pin is connected to.
+
 endmenu

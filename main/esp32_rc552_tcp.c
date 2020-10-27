@@ -89,7 +89,6 @@ void rst_gpio_get(int socket_fd) {
         printf("RST_GPIO_GET failed: %s\n", esp_err_to_name(err));
 }
 
-
 void rst_gpio_set(int socket_fd, rc522_tcp_gpio_state_t gpio_state) {
     esp_err_t err;
 
@@ -103,6 +102,37 @@ void rst_gpio_set(int socket_fd, rc522_tcp_gpio_state_t gpio_state) {
 
     if (err != ESP_OK)
         printf("RST_GPIO_SET failed: %s\n", esp_err_to_name(err));
+}
+
+
+spi_device_handle_t spi_device_handle;
+
+void spi_transceive(int socket_fd, uint8_t length) {
+
+    uint8_t* data = malloc(length);
+
+    if (recv(socket_fd, data, length, 0) < 0)
+        printf("recv failed: errno %d\n", errno);
+
+    spi_transaction_t spi_transaction = {
+        .flags = SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA,
+        .length = length*8,
+        .tx_buffer = data,
+        .rx_buffer = data
+    };
+
+    esp_err_t err = spi_device_transmit(spi_device_handle, &spi_transaction);
+    
+    uint8_t* response = malloc(1 + length);
+    response[0] = err == ESP_OK ? OPERATION_OK : OPERATION_FAIL;
+    memcpy(response + 1, data, length);
+
+    send(socket_fd, &response, 1 + length, 0);
+
+    if (err != ESP_OK)
+        printf("SPI_TRANSCEIVE failed: %s\n", esp_err_to_name(err));
+    free(data);
+    free(response);
 }
 
 
@@ -149,7 +179,7 @@ void tcp_client_task(void *pvParameters) {
                 break;
                 
                 case SPI_TRANSCEIVE:
-
+                    spi_transceive(socket_fd, operation[1]);
                 break;
 
                 default:
@@ -212,6 +242,26 @@ void fast_scan() {
 
 void spi_init() {
 
+    spi_bus_config_t spi_bus_config = {
+        .sclk_io_num = CONFIG_SPI_CLK_GPIO_NUM,
+        .mosi_io_num = CONFIG_SPI_MOSI_GPIO_NUM,
+        .miso_io_num = CONFIG_SPI_MISO_GPIO_NUM,
+        .quadhd_io_num = -1,
+        .quadwp_io_num = -1,
+        .flags = SPICOMMON_BUSFLAG_MASTER
+    };
+
+    spi_device_interface_config_t spi_device_interface_config = {
+        .address_bits = 0,
+        .command_bits = 0,
+        .dummy_bits = 0,
+        .mode = 0,
+        .clock_speed_hz = SPI_MASTER_FREQ_8M / 2,  // 4MHz
+    };
+
+    ESP_ERROR_CHECK(spi_bus_initialize(SPI2_HOST, &spi_bus_config, 1));
+    ESP_ERROR_CHECK(spi_bus_add_device(SPI2_HOST, &spi_device_interface_config, &spi_device_handle));
+    printf("[RC522_TCP] - SPI initialized.\n");
 }
 
 
